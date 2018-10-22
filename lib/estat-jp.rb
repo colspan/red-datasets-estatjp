@@ -9,10 +9,21 @@ module Datasets
   Record = Struct.new(:id, :name, :values)
 
   module Estat
-    class EstatAPI < Dataset
-      attr_accessor :areas, :timetables, :schema
+    module Configuration
+      OPTIONS_KEYS = [:app_id]
+      attr_accessor *OPTIONS_KEYS
 
-      def initialize(app_id, stats_data_id,
+      def configure
+        yield self
+      end
+    end
+
+    extend Configuration
+
+    class EstatAPI < Dataset
+      attr_accessor :app_id, :areas, :timetables, :schema
+
+      def initialize(stats_data_id,
                      area: nil, cat: nil, time: nil,
                      skip_level: [1],
                      skip_parent_area: true,
@@ -20,8 +31,9 @@ module Datasets
                      skip_nil_column: true,
                      skip_nil_row: false,
                      time_range: nil)
-        if app_id.length == 0
-          raise ArgumentError, "Please set app_id"
+        @app_id = Estat.app_id
+        if @app_id == nil or @app_id.length == 0
+          raise ArgumentError, "Please set app_id via `Datasets::Estat.configure` method"
         end
 
         super()
@@ -30,7 +42,7 @@ module Datasets
 
         # set api parameters
         params = {
-          appId: app_id,
+          appId: @app_id,
           lang: "J",
           statsDataId: stats_data_id, # 表番号
           metaGetFlg: "Y",
