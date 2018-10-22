@@ -19,7 +19,62 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### Get e-Stat API's App ID
+
+See detail at [APIの使い方(How to use e-Stat API)](https://www.e-stat.go.jp/api/api-dev/how_to_use) (Japanese only).
+
+### Configuration
+
+```ruby
+require "estat-jp"
+
+Datasets::Estat.configure do |config|
+  # put your App ID for e-Stat app_id
+  config.app_id = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+end
+```
+
+See [example of configuration](example/estat-config.rb.example).
+
+### Calling API and fetching data
+
+```ruby
+require "estat-jp"
+
+# call
+estat = Datasets::Estat::EstatAPI.new(
+  "0000020201", # Ａ　人口・世帯
+  skip_parent_area: true,
+  skip_child_area: false,
+  skip_nil_column: true,
+  skip_nil_row: false,
+  cat: ["A1101"], # A1101_人口総数
+)
+
+# fetch
+estat.each do |record|
+  p record
+end
+```
+
+## Example
+
+```bash
+# prepare environment for examples
+$ export BUNDLE_GEMFILE="Gemfile.local" # use of alternative Gemfile for examples
+$ bundle install
+
+# clustering examples
+## clustering all communes by all available columns
+$ bundle exec ruby example clustering-all.rb
+## clustering communes in Hokkaido by statistics of population (人口・世帯 0000020201)
+$ bundle exec ruby example clustering-hokkaido-0000020201.rb
+## clustering communes in Hokkaido by statistics of economy (経済基盤 0000020203)
+$ bundle exec ruby example clustering-hokkaido-0000020203.rb
+
+# after execution
+$ set -u BUNDLE_GEMFILE bundle install # unset use of Gemfile.local
+```
 
 ## Development
 
