@@ -9,11 +9,12 @@ require 'json'
 
 module Datasets
   Record = Struct.new(:id, :name, :values)
+  BASE_URL = 'http://api.e-stat.go.jp/rest/2.1/app/json/getStatsData'
 
   module Estat
     module Configuration
-      OPTIONS_KEYS = [:app_id].freeze
-      attr_accessor *OPTIONS_KEYS
+      OPTIONS_KEYS = %i[app_id].freeze
+      attr_accessor(*OPTIONS_KEYS)
 
       def configure
         yield self
@@ -40,53 +41,28 @@ module Datasets
 
         super()
 
-        base_url = 'http://api.e-stat.go.jp/rest/2.1/app/json/getStatsData'
-
-        # set api parameters
-        params = {
-          appId: @app_id,
-          lang: 'J',
-          statsDataId: stats_data_id, # 表番号
-          metaGetFlg: 'Y',
-          cntGetFlg: 'N',
-          sectionHeaderFlg: '1'
-        }
-        # cdArea: ["01105", "01106"].join(","), # 地域
-        params['cdArea'] = area.join(',') if area.instance_of?(Array)
-        # cdCat01: ["A2101", "A210101", "A210102", "A2201", "A2301", "A4101", "A4200", "A5101", "A5102"].join(","),
-        params['cdCat01'] = cat.join(',') if cat.instance_of?(Array)
-        # cdTime: ["1981100000", "1982100000" ,"1984100000"].join(","),
-        params['cdTime'] = time.join(',') if time.instance_of?(Array)
-
-        @url = URI.parse("#{base_url}?#{URI.encode_www_form(params)}")
-
         @metadata.id = 'estat-api-2.1'
         @metadata.name = 'e-Stat API 2.1'
-        @metadata.url = base_url
+        @metadata.url = BASE_URL
         @metadata.description = 'e-Stat API 2.1'
 
-        # download
-        option_hash = Digest::MD5.hexdigest(params.to_s)
-        base_name = "estat-#{option_hash}.json"
-        data_path = cache_dir_path + base_name
-        download(data_path, @url.to_s) unless data_path.exist?
-
-        # parse json
-        json_data = File.open(data_path) do |io|
-          JSON.parse(io)
-        end
-
+        @stats_data_id = stats_data_id
+        @area = area
+        @cat = cat
+        @time = time
         @skip_level = skip_level
         @skip_child_area = skip_child_area
         @skip_parent_area = skip_parent_area
         @skip_nil_column = skip_nil_column
         @skip_nil_row = skip_nil_row
         @time_range = time_range
-
-        index_data(json_data)
       end
 
       def each
+        url = generate_url(@app_id, @stats_data_id,
+                           area: @area, cat: @cat, time: @time)
+        json_data = fetch_data(url)
+        index_data(json_data)
         return to_enum(__method__) unless block_given?
 
         # create rows
@@ -108,6 +84,42 @@ module Datasets
       end
 
       private
+
+      def generate_url(app_id,
+                       stats_data_id,
+                       area: nil,
+                       cat: nil,
+                       time: nil)
+        # set api parameters
+        params = {
+          appId: app_id, lang: 'J',
+          statsDataId: stats_data_id, # 表番号
+          metaGetFlg: 'Y', cntGetFlg: 'N',
+          sectionHeaderFlg: '1'
+        }
+        # cdArea: ["01105", "01106"].join(","), # 地域
+        params['cdArea'] = area.join(',') if area.instance_of?(Array)
+        # cdCat01: ["A2101", "A210101", "A210102", "A2201", "A2301", "A4101", "A4200", "A5101", "A5102"].join(","),
+        params['cdCat01'] = cat.join(',') if cat.instance_of?(Array)
+        # cdTime: ["1981100000", "1982100000" ,"1984100000"].join(","),
+        params['cdTime'] = time.join(',') if time.instance_of?(Array)
+
+        URI.parse("#{BASE_URL}?#{URI.encode_www_form(params)}")
+      end
+
+      def fetch_data(url)
+        # download
+        option_hash = Digest::MD5.hexdigest(url.to_s)
+        base_name = "estat-#{option_hash}.json"
+        data_path = cache_dir_path + base_name
+        download(data_path, url.to_s) unless data_path.exist?
+
+        # parse json
+        json_data = File.open(data_path) do |io|
+          JSON.parse(io.read)
+        end
+        json_data
+      end
 
       def extract_def(data, id)
         data['GET_STATS_DATA']['STATISTICAL_DATA']['CLASS_INF']['CLASS_OBJ'].select { |x| x['@id'] == id }
