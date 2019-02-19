@@ -72,8 +72,8 @@ module Datasets
         download(data_path, @url.to_s) unless data_path.exist?
 
         # parse json
-        json_data = open(data_path) do |io|
-          JSON.load(io)
+        json_data = File.open(data_path) do |io|
+          JSON.parse(io)
         end
 
         @skip_level = skip_level
