@@ -13,8 +13,7 @@ module Datasets
 
   module Estat
     module Configuration
-      OPTIONS_KEYS = %i[app_id].freeze
-      attr_accessor(*OPTIONS_KEYS)
+      attr_accessor :app_id
 
       def configure
         yield self
@@ -87,9 +86,7 @@ module Datasets
 
       def generate_url(app_id,
                        stats_data_id,
-                       area: nil,
-                       cat: nil,
-                       time: nil)
+                       area: nil, cat: nil, time: nil)
         # set api parameters
         params = {
           appId: app_id, lang: 'J',
@@ -122,7 +119,9 @@ module Datasets
       end
 
       def extract_def(data, id)
-        data['GET_STATS_DATA']['STATISTICAL_DATA']['CLASS_INF']['CLASS_OBJ'].select { |x| x['@id'] == id }
+        rec = data['GET_STATS_DATA']['STATISTICAL_DATA']\
+                  ['CLASS_INF']['CLASS_OBJ']
+        rec.select { |x| x['@id'] == id }
       end
 
       def index_def(data_def)
@@ -163,6 +162,12 @@ module Datasets
           @indexed_data[row['@time']][row['@area']] = newhash
         end
 
+        skip_areas
+        skip_nil_column
+        @schema = create_header
+      end
+
+      def skip_areas
         # skip levels
         @areas.reject! { |_key, x| @skip_level.include? x['@level'].to_i }
 
@@ -182,7 +187,9 @@ module Datasets
         if @skip_child_area
           @areas.reject! { |_a_key, a_value| (@areas.key? a_value['@parentCode']) }
         end
+      end
 
+      def skip_nil_column
         # filter timetables and columns
         if @skip_nil_column
           @areas.each do |a_key, _a_value|
@@ -201,14 +208,16 @@ module Datasets
             end
           end
         end
+      end
 
-        # create header
-        @schema = []
+      def create_header
+        schema = []
         @timetables.reject { |_key, x| x[:skip] }.each do |_st_key, st_value|
           @columns.reject { |_key, x| x[:skip] }.each do |_c_key, c_value|
-            @schema << "#{st_value['@name']}_#{c_value['@name']}"
+            schema << "#{st_value['@name']}_#{c_value['@name']}"
           end
         end
+        schema
       end
     end
   end
