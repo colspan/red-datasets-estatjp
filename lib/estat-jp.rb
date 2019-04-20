@@ -58,8 +58,11 @@ module Datasets
       end
 
       def each
-        url = generate_url(@app_id, @stats_data_id,
-                           area: @area, cat: @cat, time: @time)
+        url = EstatAPI.generate_url(@app_id,
+                                      @stats_data_id,
+                                      area: @area,
+                                      cat: @cat,
+                                      time: @time)
         json_data = fetch_data(url)
         index_data(json_data)
         return to_enum(__method__) unless block_given?
@@ -84,9 +87,9 @@ module Datasets
 
       private
 
-      def generate_url(app_id,
-                       stats_data_id,
-                       area: nil, cat: nil, time: nil)
+      def self.generate_url(app_id,
+                            stats_data_id,
+                            area: nil, cat: nil, time: nil)
         # set api parameters
         params = {
           appId: app_id, lang: 'J',
@@ -104,6 +107,24 @@ module Datasets
         URI.parse("#{BASE_URL}?#{URI.encode_www_form(params)}")
       end
 
+      def self.extract_def(data, id)
+        rec = data['GET_STATS_DATA']['STATISTICAL_DATA']\
+                  ['CLASS_INF']['CLASS_OBJ']
+        rec.select { |x| x['@id'] == id }
+      end
+
+      def self.index_def(data_def)
+        unless data_def.first['CLASS'].instance_of?(Array)
+          # convert to array when number of element is 1
+          data_def.first['CLASS'] = [data_def.first['CLASS']]
+        end
+        Hash[*data_def.first['CLASS'].map { |x| [x['@code'], x] }.flatten]
+      end
+
+      def self.get_values(data)
+        data['GET_STATS_DATA']['STATISTICAL_DATA']['DATA_INF']['VALUE']
+      end
+
       def fetch_data(url)
         # download
         option_hash = Digest::MD5.hexdigest(url.to_s)
@@ -118,34 +139,16 @@ module Datasets
         json_data
       end
 
-      def extract_def(data, id)
-        rec = data['GET_STATS_DATA']['STATISTICAL_DATA']\
-                  ['CLASS_INF']['CLASS_OBJ']
-        rec.select { |x| x['@id'] == id }
-      end
-
-      def index_def(data_def)
-        unless data_def.first['CLASS'].instance_of?(Array)
-          # convert to array when number of element is 1
-          data_def.first['CLASS'] = [data_def.first['CLASS']]
-        end
-        Hash[*data_def.first['CLASS'].map { |x| [x['@code'], x] }.flatten]
-      end
-
-      def get_values(data)
-        data['GET_STATS_DATA']['STATISTICAL_DATA']['DATA_INF']['VALUE']
-      end
-
       def index_data(json_data)
-        # table_def = extract_def(json_data, "tab")
-        timetable_def = extract_def(json_data, 'time')
-        column_def = extract_def(json_data, 'cat01')
-        area_def = extract_def(json_data, 'area')
+        # table_def = EstatAPI.extract_def(json_data, "tab")
+        timetable_def = EstatAPI.extract_def(json_data, 'time')
+        column_def = EstatAPI.extract_def(json_data, 'cat01')
+        area_def = EstatAPI.extract_def(json_data, 'area')
 
         # p table_def.map { |x| x["@name"] }
-        @timetables = index_def(timetable_def)
-        @columns = index_def(column_def)
-        @areas = index_def(area_def)
+        @timetables = EstatAPI.index_def(timetable_def)
+        @columns = EstatAPI.index_def(column_def)
+        @areas = EstatAPI.index_def(area_def)
 
         # apply time_range to timetables
         if @time_range.instance_of?(Range)
@@ -153,7 +156,7 @@ module Datasets
         end
 
         @indexed_data = Hash[*@timetables.keys.map { |x| [x, {}] }.flatten]
-        get_values(json_data).each do |row|
+        EstatAPI.get_values(json_data).each do |row|
           next unless @timetables.key?(row['@time'])
 
           oldhash = @indexed_data[row['@time']][row['@area']]
