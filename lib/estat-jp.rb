@@ -25,6 +25,44 @@ module Datasets
     class EstatAPI < Dataset
       attr_accessor :app_id, :areas, :timetables, :schema
 
+      def self.generate_url(app_id,
+                            stats_data_id,
+                            area: nil, cat: nil, time: nil)
+        # set api parameters
+        params = {
+          appId: app_id, lang: 'J',
+          statsDataId: stats_data_id, # 表番号
+          metaGetFlg: 'Y', cntGetFlg: 'N',
+          sectionHeaderFlg: '1'
+        }
+        # cdArea: ["01105", "01106"].join(","), # 地域
+        params['cdArea'] = area.join(',') if area.instance_of?(Array)
+        # cdCat01: ["A2101", "A210101", "A210102", "A2201", "A2301", "A4101", "A4200", "A5101", "A5102"].join(","),
+        params['cdCat01'] = cat.join(',') if cat.instance_of?(Array)
+        # cdTime: ["1981100000", "1982100000" ,"1984100000"].join(","),
+        params['cdTime'] = time.join(',') if time.instance_of?(Array)
+
+        URI.parse("#{BASE_URL}?#{URI.encode_www_form(params)}")
+      end
+
+      def self.extract_def(data, id)
+        rec = data['GET_STATS_DATA']['STATISTICAL_DATA']\
+        ['CLASS_INF']['CLASS_OBJ']
+        rec.select { |x| x['@id'] == id }
+      end
+
+      def self.index_def(data_def)
+        unless data_def.first['CLASS'].instance_of?(Array)
+          # convert to array when number of element is 1
+          data_def.first['CLASS'] = [data_def.first['CLASS']]
+        end
+        Hash[*data_def.first['CLASS'].map { |x| [x['@code'], x] }.flatten]
+      end
+
+      def self.get_values(data)
+        data['GET_STATS_DATA']['STATISTICAL_DATA']['DATA_INF']['VALUE']
+      end
+
       def initialize(stats_data_id,
                      area: nil, cat: nil, time: nil,
                      skip_level: [1],
@@ -59,10 +97,10 @@ module Datasets
 
       def each
         url = EstatAPI.generate_url(@app_id,
-                                      @stats_data_id,
-                                      area: @area,
-                                      cat: @cat,
-                                      time: @time)
+                                    @stats_data_id,
+                                    area: @area,
+                                    cat: @cat,
+                                    time: @time)
         json_data = fetch_data(url)
         index_data(json_data)
         return to_enum(__method__) unless block_given?
@@ -86,44 +124,6 @@ module Datasets
       end
 
       private
-
-      def self.generate_url(app_id,
-                            stats_data_id,
-                            area: nil, cat: nil, time: nil)
-        # set api parameters
-        params = {
-          appId: app_id, lang: 'J',
-          statsDataId: stats_data_id, # 表番号
-          metaGetFlg: 'Y', cntGetFlg: 'N',
-          sectionHeaderFlg: '1'
-        }
-        # cdArea: ["01105", "01106"].join(","), # 地域
-        params['cdArea'] = area.join(',') if area.instance_of?(Array)
-        # cdCat01: ["A2101", "A210101", "A210102", "A2201", "A2301", "A4101", "A4200", "A5101", "A5102"].join(","),
-        params['cdCat01'] = cat.join(',') if cat.instance_of?(Array)
-        # cdTime: ["1981100000", "1982100000" ,"1984100000"].join(","),
-        params['cdTime'] = time.join(',') if time.instance_of?(Array)
-
-        URI.parse("#{BASE_URL}?#{URI.encode_www_form(params)}")
-      end
-
-      def self.extract_def(data, id)
-        rec = data['GET_STATS_DATA']['STATISTICAL_DATA']\
-                  ['CLASS_INF']['CLASS_OBJ']
-        rec.select { |x| x['@id'] == id }
-      end
-
-      def self.index_def(data_def)
-        unless data_def.first['CLASS'].instance_of?(Array)
-          # convert to array when number of element is 1
-          data_def.first['CLASS'] = [data_def.first['CLASS']]
-        end
-        Hash[*data_def.first['CLASS'].map { |x| [x['@code'], x] }.flatten]
-      end
-
-      def self.get_values(data)
-        data['GET_STATS_DATA']['STATISTICAL_DATA']['DATA_INF']['VALUE']
-      end
 
       def fetch_data(url)
         # download
