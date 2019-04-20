@@ -73,7 +73,8 @@ $ bundle exec ruby example/clustering-hokkaido-0000020201.rb
 $ bundle exec ruby example/clustering-hokkaido-0000020203.rb
 
 # after execution
-$ set -u BUNDLE_GEMFILE bundle install # unset use of Gemfile.local
+$ export BUNDLE_GEMFILE= # unset use of Gemfile.local
+$ bundle install
 ```
 
 ## Development

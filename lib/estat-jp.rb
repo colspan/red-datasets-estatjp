@@ -11,7 +11,9 @@ module Datasets
   Record = Struct.new(:id, :name, :values)
   BASE_URL = 'http://api.e-stat.go.jp/rest/2.1/app/json/getStatsData'
 
+  # Estat module
   module Estat
+    # configuration injection
     module Configuration
       attr_accessor :app_id
 
@@ -23,12 +25,13 @@ module Datasets
     extend Configuration
 
     class EstatAPI < Dataset
+      # a ruby wrapper for e-Stat API service
       attr_accessor :app_id, :areas, :timetables, :schema
 
       def self.generate_url(app_id,
                             stats_data_id,
                             area: nil, cat: nil, time: nil)
-        # set api parameters
+        # generates url for query
         params = {
           appId: app_id, lang: 'J',
           statsDataId: stats_data_id, # 表番号
@@ -140,6 +143,8 @@ module Datasets
       end
 
       def index_data(json_data)
+        # re-index data
+
         # table_def = EstatAPI.extract_def(json_data, "tab")
         timetable_def = EstatAPI.extract_def(json_data, 'time')
         column_def = EstatAPI.extract_def(json_data, 'cat01')
