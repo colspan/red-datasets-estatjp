@@ -6,7 +6,7 @@
 require "bundler/setup"
 require "kmeans-clusterer"
 
-require "estat-jp"
+require "estatjp"
 require_relative "estat-config"
 
 estat = Datasets::Estat::EstatAPI.new(

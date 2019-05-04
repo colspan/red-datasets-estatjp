@@ -1,4 +1,4 @@
-# red-datasets-estat-jp
+# red-datasets-estatjp
 e-stat API wrapper compliant with red-datasets
 
 ## Installation
@@ -6,7 +6,7 @@ e-stat API wrapper compliant with red-datasets
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'red-datasets-estat-jp'
+gem 'red-datasets-estatjp'
 ```
 
 And then execute:
@@ -15,7 +15,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install red-datasets-estat-jp
+    $ gem install red-datasets-estatjp
 
 ## Usage
 
@@ -26,7 +26,7 @@ See detail at [APIの使い方(How to use e-Stat API)](https://www.e-stat.go.jp/
 ### Configuration
 
 ```ruby
-require "estat-jp"
+require "estatjp"
 
 Datasets::Estat.configure do |config|
   # put your App ID for e-Stat app_id
@@ -39,7 +39,7 @@ See [example of configuration](example/estat-config.rb.example).
 ### Calling API and fetching data
 
 ```ruby
-require "estat-jp"
+require "estatjp"
 
 # call
 estat = Datasets::Estat::EstatAPI.new(
@@ -85,7 +85,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/colspan/red-datasets-estat-jp.
+Bug reports and pull requests are welcome on GitHub at https://github.com/colspan/red-datasets-estatjp.
 
 ## License
 

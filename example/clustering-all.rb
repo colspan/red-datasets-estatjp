@@ -5,7 +5,7 @@
 require "bundler/setup"
 require "kmeans-clusterer"
 
-require "estat-jp"
+require "estatjp"
 require_relative "estat-config"
 
 # 市区町村データ 基礎データ（廃置分合処理済）

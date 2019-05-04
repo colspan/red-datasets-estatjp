@@ -66,14 +66,14 @@ module Datasets
         data['GET_STATS_DATA']['STATISTICAL_DATA']['DATA_INF']['VALUE']
       end
 
-      def initialize(stats_data_id,
-                     area: nil, cat: nil, time: nil,
-                     skip_level: [1],
-                     skip_parent_area: true,
-                     skip_child_area: false,
-                     skip_nil_column: true,
-                     skip_nil_row: false,
-                     time_range: nil)
+      def initialize( stats_data_id,
+                      area: nil, cat: nil, time: nil,
+                      skip_level: [1],
+                      skip_parent_area: true,
+                      skip_child_area: false,
+                      skip_nil_column: true,
+                      skip_nil_row: false,
+                      time_range: nil)
         @app_id = Estat.app_id
         if @app_id.nil? || @app_id.empty?
           raise ArgumentError, 'Please set app_id via `Datasets::Estat.configure` method'
