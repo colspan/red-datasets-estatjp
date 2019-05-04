@@ -15,6 +15,15 @@ module Datasets
     module Configuration
       attr_accessor :app_id
 
+      #
+      # configuration for e-Stat API
+      # See detail at https://www.e-stat.go.jp/api/api-dev/how_to_use (Japanese only).
+      # @example
+      #  Datasets::Estat.configure do |config|
+      #   # put your App ID for e-Stat app_id
+      #   config.app_id = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+      #  end
+      #
       def configure
         yield self
       end
@@ -22,12 +31,8 @@ module Datasets
 
     extend Configuration
 
-    #
-    # Estat
-    #
-    #
+    # wrapper class for e-Stat API service
     class EstatAPI < Dataset
-      # a ruby wrapper for e-Stat API service
       attr_accessor :app_id, :areas, :timetables, :schema
 
       def self.generate_url(app_id,
@@ -36,15 +41,15 @@ module Datasets
         # generates url for query
         params = {
           appId: app_id, lang: 'J',
-          statsDataId: stats_data_id, # 表番号
+          statsDataId: stats_data_id, # 統計表ID
           metaGetFlg: 'Y', cntGetFlg: 'N',
           sectionHeaderFlg: '1'
         }
-        # cdArea: ["01105", "01106"].join(","), # 地域
+        # cdArea: ["01105", "01106"].join(","), # 地域事項
         params['cdArea'] = area.join(',') if area.instance_of?(Array)
-        # cdCat01: ["A2101", "A210101", "A210102", "A2201", "A2301", "A4101", "A4200", "A5101", "A5102"].join(","),
+        # cdCat01: ["A2101", "A210101", "A210102", "A2201", "A2301", "A4101", "A4200", "A5101", "A5102"].join(","), # 分類事項
         params['cdCat01'] = cat.join(',') if cat.instance_of?(Array)
-        # cdTime: ["1981100000", "1982100000" ,"1984100000"].join(","),
+        # cdTime: ["1981100000", "1982100000" ,"1984100000"].join(","), # 時間軸事項
         params['cdTime'] = time.join(',') if time.instance_of?(Array)
 
         URI.parse("#{BASE_URL}?#{URI.encode_www_form(params)}")
@@ -68,8 +73,33 @@ module Datasets
         data['GET_STATS_DATA']['STATISTICAL_DATA']['DATA_INF']['VALUE']
       end
 
+      #
+      # generate accessor instance for e-Stat API.
+      # for detail spec : https://www.e-stat.go.jp/api/api-info/e-stat-manual
+      # @param [String] api_version API Version (defaults to `'2.1'`)
+      # @param [String] stats_data_id 統計表ID
+      # @param [Array<String>] cat 分類事項 (省略時はすべて取得)
+      # @param [Array<String>] area 地域事項 (省略時はすべて取得)
+      # @param [Array<String>] time 時間軸事項 (省略時はすべて取得)
+      # @param [Array<Number>] skip_level 省略する階層レベル (defaults to `[1]`)
+      # @param [Boolean] skip_parent_area 末端のみの階層に限定する
+      # @param [Boolean] skip_child_area 末端の階層を省略する
+      # @param [Boolean] skip_nil_column 1行でも欠損がある列をスキップする
+      # @param [Boolean] skip_nil_row 1列でも欠損がある行をスキップする
+      # @example
+      #   estat = Datasets::Estat::EstatAPI.new(
+      #     "0000020201", # Ａ　人口・世帯
+      #     cat: ["A1101"], # A1101_人口総数
+      #     area: ["01105", "01106"], # "北海道 札幌市 豊平区", "北海道 札幌市 南区"
+      #     time: ["1981100000", "1982100000"],
+      #     skip_parent_area:false , # 例: 札幌市○○区があるときは札幌市をスキップ
+      #     skip_child_area: true, # 例: 札幌市○○区をスキップして札幌市を残す TODO skip_(parent|child) を統合する
+      #     skip_nil_column: true, #  1行でも欠損があったら列をスキップする
+      #     skip_nil_row: false, # 1列でも欠損があったら行をスキップする
+      #   )
+      #
       def initialize( stats_data_id,
-                      version: '2.1',
+                      api_version: '2.1',
                       area: nil, cat: nil, time: nil,
                       skip_level: [1],
                       skip_parent_area: true,
@@ -84,12 +114,12 @@ module Datasets
 
         super()
 
-        @metadata.id = "estat-api-#{version}"
-        @metadata.name = "e-Stat API #{version}"
+        @api_version = api_version
+        @metadata.id = "estat-api-#{api_version}"
+        @metadata.name = "e-Stat API #{api_version}"
         @metadata.url = BASE_URL
-        @metadata.description = "e-Stat API #{version}"
+        @metadata.description = "e-Stat API #{api_version}"
 
-        @version = version
         @stats_data_id = stats_data_id
         @area = area
         @cat = cat
@@ -102,6 +132,20 @@ module Datasets
         @time_range = time_range
       end
 
+      #
+      # fetch data records from Remote API
+      # @example
+      #   indices = []
+      #   rows = []
+      #   map_id_name = {}
+      #   estat.each do |record|
+      #     # 北海道に限定する
+      #     next unless record.id.to_s.start_with? '01'
+      #     indices << record.id
+      #     rows << record.values
+      #     map_id_name[record.id] = record.name
+      #   end
+      #
       def each
         url = EstatAPI.generate_url(@app_id,
                                     @stats_data_id,
