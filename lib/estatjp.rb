@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'datasets'
 
 require 'digest/md5'
@@ -24,6 +22,10 @@ module Datasets
 
     extend Configuration
 
+    #
+    # Estat
+    #
+    #
     class EstatAPI < Dataset
       # a ruby wrapper for e-Stat API service
       attr_accessor :app_id, :areas, :timetables, :schema
@@ -67,6 +69,7 @@ module Datasets
       end
 
       def initialize( stats_data_id,
+                      version: '2.1',
                       area: nil, cat: nil, time: nil,
                       skip_level: [1],
                       skip_parent_area: true,
@@ -81,11 +84,12 @@ module Datasets
 
         super()
 
-        @metadata.id = 'estat-api-2.1'
-        @metadata.name = 'e-Stat API 2.1'
+        @metadata.id = "estat-api-#{version}"
+        @metadata.name = "e-Stat API #{version}"
         @metadata.url = BASE_URL
-        @metadata.description = 'e-Stat API 2.1'
+        @metadata.description = "e-Stat API #{version}"
 
+        @version = version
         @stats_data_id = stats_data_id
         @area = area
         @cat = cat
