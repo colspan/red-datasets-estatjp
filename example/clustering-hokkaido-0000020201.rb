@@ -26,7 +26,6 @@ map_id_name = {}
 estat.each do |record|
   # 北海道に限定する
   next unless record.id.to_s.start_with? '01'
-
   indices << record.id
   rows << record.values
   map_id_name[record.id] = record.name
