@@ -6,7 +6,7 @@ require 'bundler/setup'
 require 'kmeans-clusterer'
 
 require 'estatjp'
-require_relative 'estat-config'
+require_relative 'estatjp-config'
 
 # 市区町村データ 基礎データ（廃置分合処理済）
 # https://www.e-stat.go.jp/stat-search/database?page=1&layout=datalist&toukei=00200502&tstat=000001111376&cycle=8&tclass1=000001111380&second=1&second2=1
@@ -46,7 +46,7 @@ joined_data = {}
 map_id_name = {}
 [estat_datasets_essential, estat_datasets_social_life].each do |dataset_def|
   dataset_def.each do |dataset|
-    estat = Datasets::Estat::EstatAPI.new(dataset[:data_id], skip_nil_column: true)
+    estat = Datasets::Estatjp::JsonAPI.new(dataset[:data_id], skip_nil_column: true)
     schema << estat.schema
     estat.each do |record|
       joined_data[record.id] = [] unless joined_data.key? record.id

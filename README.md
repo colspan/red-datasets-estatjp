@@ -28,7 +28,7 @@ See detail at [APIの使い方(How to use e-Stat API)](https://www.e-stat.go.jp/
 ```ruby
 require 'estatjp'
 
-Datasets::Estat.configure do |config|
+Datasets::Estatjp.configure do |config|
   # put your App ID for e-Stat app_id
   config.app_id = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 end
@@ -42,7 +42,7 @@ See [example of configuration](example/estat-config.rb.example).
 require 'estatjp'
 
 # call
-estat = Datasets::Estat::EstatAPI.new(
+estat = Datasets::Estatjp::JsonAPI.new(
   '0000020201', # Ａ　人口・世帯
   skip_parent_area: true,
   skip_child_area: false,

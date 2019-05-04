@@ -4,7 +4,7 @@ require 'estatjp/version'
 
 Gem::Specification.new do |spec|
   spec.name = 'red-datasets-estatjp'
-  spec.version = Datasets::Estat::VERSION
+  spec.version = Datasets::Estatjp::VERSION
   spec.authors = ['Kunihiko MIYOSHI']
   spec.email = ['miyoshik@gmail.com']
 

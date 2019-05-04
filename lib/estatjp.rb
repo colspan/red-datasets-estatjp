@@ -7,10 +7,9 @@ require 'json'
 
 module Datasets
   Record = Struct.new(:id, :name, :values)
-  BASE_URL = 'http://api.e-stat.go.jp/rest/2.1/app/json/getStatsData'
 
   # Estat module
-  module Estat
+  module Estatjp
     # configuration injection
     module Configuration
       attr_accessor :app_id
@@ -32,10 +31,11 @@ module Datasets
     extend Configuration
 
     # wrapper class for e-Stat API service
-    class EstatAPI < Dataset
+    class JsonAPI < Dataset
       attr_accessor :app_id, :areas, :timetables, :schema
 
-      def self.generate_url(app_id,
+      def self.generate_url(base_url,
+                            app_id,
                             stats_data_id,
                             area: nil, cat: nil, time: nil)
         # generates url for query
@@ -52,7 +52,7 @@ module Datasets
         # cdTime: ["1981100000", "1982100000" ,"1984100000"].join(","), # 時間軸事項
         params['cdTime'] = time.join(',') if time.instance_of?(Array)
 
-        URI.parse("#{BASE_URL}?#{URI.encode_www_form(params)}")
+        URI.parse("#{base_url}?#{URI.encode_www_form(params)}")
       end
 
       def self.extract_def(data, id)
@@ -87,7 +87,7 @@ module Datasets
       # @param [Boolean] skip_nil_column 1行でも欠損がある列をスキップする
       # @param [Boolean] skip_nil_row 1列でも欠損がある行をスキップする
       # @example
-      #   estat = Datasets::Estat::EstatAPI.new(
+      #   estat = Datasets::Estatjp::JsonAPI.new(
       #     "0000020201", # Ａ　人口・世帯
       #     cat: ["A1101"], # A1101_人口総数
       #     area: ["01105", "01106"], # "北海道 札幌市 豊平区", "北海道 札幌市 南区"
@@ -107,17 +107,18 @@ module Datasets
                       skip_nil_column: true,
                       skip_nil_row: false,
                       time_range: nil)
-        @app_id = Estat.app_id
+        @app_id = Estatjp.app_id
         if @app_id.nil? || @app_id.empty?
           raise ArgumentError, 'Please set app_id via `Datasets::Estat.configure` method'
         end
 
         super()
 
+        @base_url = "http://api.e-stat.go.jp/rest/#{api_version}/app/json/getStatsData"
         @api_version = api_version
         @metadata.id = "estat-api-#{api_version}"
         @metadata.name = "e-Stat API #{api_version}"
-        @metadata.url = BASE_URL
+        @metadata.url = @base_url
         @metadata.description = "e-Stat API #{api_version}"
 
         @stats_data_id = stats_data_id
@@ -147,11 +148,12 @@ module Datasets
       #   end
       #
       def each
-        url = EstatAPI.generate_url(@app_id,
-                                    @stats_data_id,
-                                    area: @area,
-                                    cat: @cat,
-                                    time: @time)
+        url = JsonAPI.generate_url(@base_url,
+                                   @app_id,
+                                   @stats_data_id,
+                                   area: @area,
+                                   cat: @cat,
+                                   time: @time)
         json_data = fetch_data(url)
         index_data(json_data)
         return to_enum(__method__) unless block_given?
@@ -195,15 +197,15 @@ module Datasets
       def index_data(json_data)
         # re-index data
 
-        # table_def = EstatAPI.extract_def(json_data, "tab")
-        timetable_def = EstatAPI.extract_def(json_data, 'time')
-        column_def = EstatAPI.extract_def(json_data, 'cat01')
-        area_def = EstatAPI.extract_def(json_data, 'area')
+        # table_def = JsonAPI.extract_def(json_data, "tab")
+        timetable_def = JsonAPI.extract_def(json_data, 'time')
+        column_def = JsonAPI.extract_def(json_data, 'cat01')
+        area_def = JsonAPI.extract_def(json_data, 'area')
 
         # p table_def.map { |x| x["@name"] }
-        @timetables = EstatAPI.index_def(timetable_def)
-        @columns = EstatAPI.index_def(column_def)
-        @areas = EstatAPI.index_def(area_def)
+        @timetables = JsonAPI.index_def(timetable_def)
+        @columns = JsonAPI.index_def(column_def)
+        @areas = JsonAPI.index_def(area_def)
 
         # apply time_range to timetables
         if @time_range.instance_of?(Range)
@@ -211,7 +213,7 @@ module Datasets
         end
 
         @indexed_data = Hash[*@timetables.keys.map { |x| [x, {}] }.flatten]
-        EstatAPI.get_values(json_data).each do |row|
+        JsonAPI.get_values(json_data).each do |row|
           next unless @timetables.key?(row['@time'])
 
           oldhash = @indexed_data[row['@time']][row['@area']]

@@ -8,9 +8,9 @@ require 'kmeans-clusterer'
 require 'daru'
 
 require 'estatjp'
-require_relative 'estat-config'
+require_relative 'estatjp-config'
 
-estat = Datasets::Estat::EstatAPI.new(
+estat = Datasets::Estatjp::JsonAPI.new(
   '0000020201', # Ａ　人口・世帯
   skip_parent_area: true,
   skip_child_area: false,

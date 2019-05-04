@@ -1,5 +1,5 @@
 module Datasets
-  module Estat
+  module Estatjp
     VERSION = '0.2.0'.freeze
   end
 end
