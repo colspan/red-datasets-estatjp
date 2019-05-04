@@ -34,7 +34,7 @@ Datasets::Estatjp.configure do |config|
 end
 ```
 
-See [example of configuration](example/estat-config.rb.example).
+See [example of configuration](example/estatjp-config.rb.example).
 
 ### Calling API and fetching data
 
