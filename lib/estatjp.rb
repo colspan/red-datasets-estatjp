@@ -31,7 +31,7 @@ module Datasets
     extend Configuration
 
     # wrapper class for e-Stat API service
-    class JsonAPI < Dataset
+    class JSONAPI < Dataset
       attr_accessor :app_id, :areas, :timetables, :schema
 
       def self.generate_url(base_url,
@@ -87,7 +87,7 @@ module Datasets
       # @param [Boolean] skip_nil_column 1行でも欠損がある列をスキップする
       # @param [Boolean] skip_nil_row 1列でも欠損がある行をスキップする
       # @example
-      #   estat = Datasets::Estatjp::JsonAPI.new(
+      #   estat = Datasets::Estatjp::JSONAPI.new(
       #     "0000020201", # Ａ　人口・世帯
       #     cat: ["A1101"], # A1101_人口総数
       #     area: ["01105", "01106"], # "北海道 札幌市 豊平区", "北海道 札幌市 南区"
@@ -148,7 +148,7 @@ module Datasets
       #   end
       #
       def each
-        url = JsonAPI.generate_url(@base_url,
+        url = JSONAPI.generate_url(@base_url,
                                    @app_id,
                                    @stats_data_id,
                                    area: @area,
@@ -197,15 +197,15 @@ module Datasets
       def index_data(json_data)
         # re-index data
 
-        # table_def = JsonAPI.extract_def(json_data, "tab")
-        timetable_def = JsonAPI.extract_def(json_data, 'time')
-        column_def = JsonAPI.extract_def(json_data, 'cat01')
-        area_def = JsonAPI.extract_def(json_data, 'area')
+        # table_def = JSONAPI.extract_def(json_data, "tab")
+        timetable_def = JSONAPI.extract_def(json_data, 'time')
+        column_def = JSONAPI.extract_def(json_data, 'cat01')
+        area_def = JSONAPI.extract_def(json_data, 'area')
 
         # p table_def.map { |x| x["@name"] }
-        @timetables = JsonAPI.index_def(timetable_def)
-        @columns = JsonAPI.index_def(column_def)
-        @areas = JsonAPI.index_def(area_def)
+        @timetables = JSONAPI.index_def(timetable_def)
+        @columns = JSONAPI.index_def(column_def)
+        @areas = JSONAPI.index_def(area_def)
 
         # apply time_range to timetables
         if @time_range.instance_of?(Range)
@@ -213,7 +213,7 @@ module Datasets
         end
 
         @indexed_data = Hash[*@timetables.keys.map { |x| [x, {}] }.flatten]
-        JsonAPI.get_values(json_data).each do |row|
+        JSONAPI.get_values(json_data).each do |row|
           next unless @timetables.key?(row['@time'])
 
           oldhash = @indexed_data[row['@time']][row['@area']]

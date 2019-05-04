@@ -10,7 +10,7 @@ require 'daru'
 require 'estatjp'
 require_relative 'estatjp-config'
 
-estat = Datasets::Estatjp::JsonAPI.new(
+estat = Datasets::Estatjp::JSONAPI.new(
   '0000020201', # Ａ　人口・世帯
   skip_parent_area: true,
   skip_child_area: false,

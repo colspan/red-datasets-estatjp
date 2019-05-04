@@ -46,7 +46,7 @@ joined_data = {}
 map_id_name = {}
 [estat_datasets_essential, estat_datasets_social_life].each do |dataset_def|
   dataset_def.each do |dataset|
-    estat = Datasets::Estatjp::JsonAPI.new(dataset[:data_id], skip_nil_column: true)
+    estat = Datasets::Estatjp::JSONAPI.new(dataset[:data_id], skip_nil_column: true)
     schema << estat.schema
     estat.each do |record|
       joined_data[record.id] = [] unless joined_data.key? record.id

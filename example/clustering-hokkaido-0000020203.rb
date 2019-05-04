@@ -9,7 +9,7 @@ require 'kmeans-clusterer'
 require 'estatjp'
 require_relative 'estatjp-config'
 
-estat = Datasets::Estatjp::JsonAPI.new(
+estat = Datasets::Estatjp::JSONAPI.new(
   '0000020203', # Ｃ　経済基盤
   skip_parent_area: false,
   skip_child_area: true,

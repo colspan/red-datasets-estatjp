@@ -42,7 +42,7 @@ See [example of configuration](example/estat-config.rb.example).
 require 'estatjp'
 
 # call
-estat = Datasets::Estatjp::JsonAPI.new(
+estat = Datasets::Estatjp::JSONAPI.new(
   '0000020201', # Ａ　人口・世帯
   skip_parent_area: true,
   skip_child_area: false,

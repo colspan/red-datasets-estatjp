@@ -5,13 +5,13 @@ RSpec.describe Datasets::Estatjp do
 
   it 'check configuration' do
     expect do
-      Datasets::Estatjp::JsonAPI.new('test')
+      Datasets::Estatjp::JSONAPI.new('test')
     end.to raise_error(ArgumentError)
     Datasets::Estatjp.configure do |config|
       config.app_id = 'test'
     end
     expect do
-      Datasets::Estatjp::JsonAPI.new('test')
+      Datasets::Estatjp::JSONAPI.new('test')
     end.not_to raise_error
   end
 
@@ -19,7 +19,7 @@ RSpec.describe Datasets::Estatjp do
     app_id = 'abcdef'
     stats_data_id = '000000'
     base_url = 'http://testurl/rest/2.1/app/json/getStatsData'
-    url = Datasets::Estatjp::JsonAPI.generate_url(base_url, app_id, stats_data_id)
+    url = Datasets::Estatjp::JSONAPI.generate_url(base_url, app_id, stats_data_id)
     expect(url.to_s).to eq 'http://testurl/rest/2.1/app/json/getStatsData?appId=abcdef&lang=J&statsDataId=000000&metaGetFlg=Y&cntGetFlg=N&sectionHeaderFlg=1'
   end
 end
