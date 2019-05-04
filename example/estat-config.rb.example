@@ -1,4 +1,4 @@
-require "estatjp"
+require 'estatjp'
 
 # rename this file to `estat-config.rb`
 Datasets::Estat.configure do |config|

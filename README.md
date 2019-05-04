@@ -26,11 +26,11 @@ See detail at [APIの使い方(How to use e-Stat API)](https://www.e-stat.go.jp/
 ### Configuration
 
 ```ruby
-require "estatjp"
+require 'estatjp'
 
 Datasets::Estat.configure do |config|
   # put your App ID for e-Stat app_id
-  config.app_id = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  config.app_id = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 end
 ```
 
@@ -39,16 +39,16 @@ See [example of configuration](example/estat-config.rb.example).
 ### Calling API and fetching data
 
 ```ruby
-require "estatjp"
+require 'estatjp'
 
 # call
 estat = Datasets::Estat::EstatAPI.new(
-  "0000020201", # Ａ　人口・世帯
+  '0000020201', # Ａ　人口・世帯
   skip_parent_area: true,
   skip_child_area: false,
   skip_nil_column: true,
   skip_nil_row: false,
-  cat: ["A1101"], # A1101_人口総数
+  cat: ['A1101'], # A1101_人口総数
 )
 
 # fetch
@@ -61,7 +61,7 @@ end
 
 ```bash
 # prepare environment for examples
-$ export BUNDLE_GEMFILE="Gemfile.local" # use of alternative Gemfile for examples
+$ export BUNDLE_GEMFILE='Gemfile.local' # use of alternative Gemfile for examples
 $ bundle install
 
 # clustering examples
