@@ -1,14 +1,16 @@
-source "https://rubygems.org"
+# frozen_string_literal: true
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+source 'https://rubygems.org'
 
-# Specify your gem's dependencies in red-datasets-estat-jp.gemspec
+git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
+
+# Specify your gem's dependencies in red-datasets-estatjp.gemspec
 gemspec
 
-gem "red-datasets"
-gem "rspec"
+gem 'red-datasets'
+gem 'rspec'
 
 # for example
-gem "kmeans-clusterer"
-gem "daru"
-gem "narray"
+gem 'kmeans-clusterer'
+gem 'daru'
+gem 'narray'

@@ -6,17 +6,17 @@
 require 'bundler/setup'
 require 'kmeans-clusterer'
 
-require 'estat-jp'
-require_relative 'estat-config'
+require 'estatjp'
+require_relative 'estatjp-config'
 
-estat = Datasets::Estat::EstatAPI.new(
+estat = Datasets::Estatjp::JSONAPI.new(
   '0000020203', # Ｃ　経済基盤
   skip_parent_area: false,
   skip_child_area: true,
   skip_nil_column: false,
   skip_nil_row: true,
   cat: %w[C120110 C120120], # C120110_課税対象所得, C120120_納税義務者数（所得割）
-  time_range: -4..-1, # 2013〜2016年 (末尾から4〜1件目)
+  time_range: -4..-1 # 2013〜2016年 (末尾から4〜1件目)
 )
 
 # prepare for clustering

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    red-datasets-estat-jp (0.1.0)
+    red-datasets-estatjp (0.2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -42,8 +42,8 @@ DEPENDENCIES
   narray
   rake (~> 10.0)
   red-datasets
-  red-datasets-estat-jp!
+  red-datasets-estatjp!
   rspec
 
 BUNDLED WITH
-   1.16.5
+   1.17.2
