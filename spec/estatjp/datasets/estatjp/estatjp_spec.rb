@@ -10,25 +10,28 @@ RSpec.describe Datasets::Estatjp do
     end.to raise_error(ArgumentError)
 
     # ok if app_id is set by ENV
-    ENV['ESTATJP_APPID'] = 'test'
+    ENV['ESTATJP_APPID'] = 'test_by_env'
     expect do
-      Datasets::Estatjp::JSONAPI.new('test')
+      obj = Datasets::Estatjp::JSONAPI.new('test')
+      expect(obj.app_id).to eq 'test_by_env'
     end.not_to raise_error
     ENV['ESTATJP_APPID'] = nil
     
     # ok if app_id is set by configure method
     Datasets::Estatjp.configure do |config|
-      config.app_id = 'test'
+      config.app_id = 'test_by_method'
     end
     expect do
-      Datasets::Estatjp::JSONAPI.new('test')
+      obj = Datasets::Estatjp::JSONAPI.new('test')
+      expect(obj.app_id).to eq 'test_by_method'
     end.not_to raise_error
     Datasets::Estatjp.app_id = nil
 
     # ok if app_id is set by ENV
-    ENV['ESTATJP_APPID'] = 'test'
+    ENV['ESTATJP_APPID'] = 'test_by_env2'
     expect do
-      Datasets::Estatjp::JSONAPI.new('test')
+      obj = Datasets::Estatjp::JSONAPI.new('test')
+      expect(obj.app_id).to eq 'test_by_env2'
     end.not_to raise_error
     ENV['ESTATJP_APPID'] = nil
 
