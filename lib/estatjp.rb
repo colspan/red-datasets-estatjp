@@ -107,9 +107,9 @@ module Datasets
                       skip_nil_column: true,
                       skip_nil_row: false,
                       time_range: nil)
-        @app_id = Estatjp.app_id
+        @app_id = fetch_appid
         if @app_id.nil? || @app_id.empty?
-          raise ArgumentError, 'Please set app_id via `Datasets::Estat.configure` method'
+          raise ArgumentError, 'Please set app_id via `Datasets::Estatjp.configure` method or environment var `ESTATJP_APPID`'
         end
 
         super()
@@ -179,6 +179,10 @@ module Datasets
       end
 
       private
+
+      def fetch_appid
+        defined?(Estatjp.app_id) and !Estatjp.app_id.nil? ? Estatjp.app_id : ENV.fetch('ESTATJP_APPID', nil)
+      end
 
       def fetch_data(url)
         # download

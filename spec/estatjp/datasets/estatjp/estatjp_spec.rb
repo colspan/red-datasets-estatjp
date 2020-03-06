@@ -4,15 +4,35 @@ RSpec.describe Datasets::Estatjp do
   end
 
   it 'check configuration' do
+    # error if app_id is undefined
     expect do
       Datasets::Estatjp::JSONAPI.new('test')
     end.to raise_error(ArgumentError)
+
+    # ok if app_id is set by ENV
+    ENV['ESTATJP_APPID'] = 'test'
+    expect do
+      Datasets::Estatjp::JSONAPI.new('test')
+    end.not_to raise_error
+    ENV['ESTATJP_APPID'] = nil
+    
+    # ok if app_id is set by configure method
     Datasets::Estatjp.configure do |config|
       config.app_id = 'test'
     end
     expect do
       Datasets::Estatjp::JSONAPI.new('test')
     end.not_to raise_error
+    Datasets::Estatjp.app_id = nil
+
+    # ok if app_id is set by ENV
+    ENV['ESTATJP_APPID'] = 'test'
+    expect do
+      Datasets::Estatjp::JSONAPI.new('test')
+    end.not_to raise_error
+    ENV['ESTATJP_APPID'] = nil
+
+    
   end
 
   it 'url generator test' do
