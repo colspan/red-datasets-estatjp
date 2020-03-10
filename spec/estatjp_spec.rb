@@ -1,3 +1,5 @@
+require 'pathname'
+
 RSpec.describe Datasets::Estatjp do
   it 'has a version number' do
     expect(Datasets::Estatjp::VERSION).not_to be nil
@@ -35,7 +37,6 @@ RSpec.describe Datasets::Estatjp do
     end.not_to raise_error
     ENV['ESTATJP_APPID'] = nil
 
-    
   end
 
   it 'url generator test' do
@@ -45,6 +46,23 @@ RSpec.describe Datasets::Estatjp do
     url = Datasets::Estatjp::JSONAPI.generate_url(base_url, app_id, stats_data_id)
     expect(url.to_s).to eq 'http://testurl/rest/2.1/app/json/getStatsData?appId=abcdef&lang=J&statsDataId=000000&metaGetFlg=Y&cntGetFlg=N&sectionHeaderFlg=1'
   end
+
+  it 'raises when status is invalid' do
+    ENV['ESTATJP_APPID'] = 'test_by_env2'
+    estat_obj = Datasets::Estatjp::JSONAPI.new('test')
+    estat_obj.instance_eval do
+      @data_path = Pathname('spec/data/test-403-forbidden.json')
+    end
+    expect do
+      estat_obj.each do |record|
+        record
+      end
+    end.to raise_error(Exception)
+    ENV['ESTATJP_APPID'] = nil
+  end
+
+  # TODO test index_data
+
 end
 
 ## MEMO fetching actual app_id from environment

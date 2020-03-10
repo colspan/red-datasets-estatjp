@@ -200,8 +200,12 @@ module Datasets
           JSON.parse(io.read)
         end
 
-        # TODO check status
-        # json_data['GET_STATS_DATA']['RESULT']['STATUS']
+        # check status
+        api_status = json_data['GET_STATS_DATA']['RESULT']['STATUS']
+        if api_status != 0
+          error_msg = json_data['GET_STATS_DATA']['RESULT']['ERROR_MSG']
+          raise Exception.new("code #{api_status} : #{error_msg}")
+        end
 
         # index data
         ## table_def = JSONAPI.extract_def(json_data, "tab")
