@@ -98,15 +98,15 @@ module Datasets
       #     skip_nil_row: false, # 1列でも欠損があったら行をスキップする
       #   )
       #
-      def initialize( stats_data_id,
-                      api_version: '2.1',
-                      area: nil, cat: nil, time: nil,
-                      skip_level: [1],
-                      skip_parent_area: true,
-                      skip_child_area: false,
-                      skip_nil_column: true,
-                      skip_nil_row: false,
-                      time_range: nil)
+      def initialize(stats_data_id,
+                     api_version: '2.1',
+                     area: nil, cat: nil, time: nil,
+                     skip_level: [1],
+                     skip_parent_area: true,
+                     skip_child_area: false,
+                     skip_nil_column: true,
+                     skip_nil_row: false,
+                     time_range: nil)
         @app_id = fetch_appid
         if @app_id.nil? || @app_id.empty?
           raise ArgumentError, 'Please set app_id via `Datasets::Estatjp.configure` method or environment var `ESTATJP_APPID`'
@@ -131,6 +131,17 @@ module Datasets
         @skip_nil_column = skip_nil_column
         @skip_nil_row = skip_nil_row
         @time_range = time_range
+
+        @url = JSONAPI.generate_url(@base_url,
+                                   @app_id,
+                                   @stats_data_id,
+                                   area: @area,
+                                   cat: @cat,
+                                   time: @time)
+        option_hash = Digest::MD5.hexdigest(@url.to_s)
+        base_name = "estat-#{option_hash}.json"
+        @data_path = cache_dir_path + base_name
+                           
       end
 
       #
@@ -148,15 +159,9 @@ module Datasets
       #   end
       #
       def each
-        url = JSONAPI.generate_url(@base_url,
-                                   @app_id,
-                                   @stats_data_id,
-                                   area: @area,
-                                   cat: @cat,
-                                   time: @time)
-        json_data = fetch_data(url)
-        index_data(json_data)
         return to_enum(__method__) unless block_given?
+        fetch_data
+        index_data
 
         # create rows
         @areas.each do |a_key, a_value|
@@ -174,44 +179,42 @@ module Datasets
           end
           next unless rows.count(nil).zero?
 
-          yield(Record.new(a_key, a_value['@name'], rows.flatten))
+          yield Record.new(a_key, a_value['@name'], rows.flatten)
         end
       end
 
       private
 
       def fetch_appid
-        defined?(Estatjp.app_id) and !Estatjp.app_id.nil? ? Estatjp.app_id : ENV.fetch('ESTATJP_APPID', nil)
+        defined?(Estatjp.app_id) && !Estatjp.app_id.nil? ? Estatjp.app_id : ENV.fetch('ESTATJP_APPID', nil)
       end
 
-      def fetch_data(url)
-        # download
-        option_hash = Digest::MD5.hexdigest(url.to_s)
-        base_name = "estat-#{option_hash}.json"
-        data_path = cache_dir_path + base_name
-        download(data_path, url.to_s) unless data_path.exist?
+      def fetch_data
+        download(@data_path, @url.to_s) unless @data_path.exist?
+        # TODO check error
+       end
 
+      def index_data
         # parse json
-        json_data = File.open(data_path) do |io|
+        json_data = File.open(@data_path) do |io|
           JSON.parse(io.read)
         end
-        json_data
-      end
 
-      def index_data(json_data)
-        # re-index data
+        # TODO check status
+        # json_data['GET_STATS_DATA']['RESULT']['STATUS']
 
-        # table_def = JSONAPI.extract_def(json_data, "tab")
+        # index data
+        ## table_def = JSONAPI.extract_def(json_data, "tab")
         timetable_def = JSONAPI.extract_def(json_data, 'time')
         column_def = JSONAPI.extract_def(json_data, 'cat01')
         area_def = JSONAPI.extract_def(json_data, 'area')
 
-        # p table_def.map { |x| x["@name"] }
+        ## p table_def.map { |x| x["@name"] }
         @timetables = JSONAPI.index_def(timetable_def)
         @columns = JSONAPI.index_def(column_def)
         @areas = JSONAPI.index_def(area_def)
 
-        # apply time_range to timetables
+        ## apply time_range to timetables
         if @time_range.instance_of?(Range)
           @timetables.select! { |k, _v| @timetables.keys[@time_range].include? k }
         end
