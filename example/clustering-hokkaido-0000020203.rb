@@ -11,8 +11,7 @@ require_relative 'estatjp-config'
 
 estat = Datasets::Estatjp::JSONAPI.new(
   '0000020203', # Ｃ　経済基盤
-  skip_parent_area: false,
-  skip_child_area: true,
+  hierarchy_selection: 'parent',
   skip_nil_column: false,
   skip_nil_row: true,
   cat: %w[C120110 C120120], # C120110_課税対象所得, C120120_納税義務者数（所得割）

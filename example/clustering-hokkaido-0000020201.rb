@@ -12,8 +12,7 @@ require_relative 'estatjp-config'
 
 estat = Datasets::Estatjp::JSONAPI.new(
   '0000020201', # Ａ　人口・世帯
-  skip_parent_area: true,
-  skip_child_area: false,
+  hierarchy_selection: 'child',
   skip_nil_column: true,
   skip_nil_row: false,
   cat: ['A1101'] # A1101_人口総数
