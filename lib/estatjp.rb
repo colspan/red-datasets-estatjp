@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'datasets'
 
 require 'digest/md5'
@@ -82,8 +84,7 @@ module Datasets
       # @param [Array<String>] area 地域事項 (省略時はすべて取得)
       # @param [Array<String>] time 時間軸事項 (省略時はすべて取得)
       # @param [Array<Number>] skip_level 省略する階層レベル (defaults to `[1]`)
-      # @param [Boolean] skip_parent_area 末端のみの階層に限定する
-      # @param [Boolean] skip_child_area 末端の階層を省略する
+      # @param [String] hierarchy_selection 階層関係の上位・末端のフィルタリングをする ('child', 'parent', 'both') (例: 札幌市○○区 -> 'child':札幌市○○区のみ; 'parent':札幌市のみ; 'both':フィルタリングしない)
       # @param [Boolean] skip_nil_column 1行でも欠損がある列をスキップする
       # @param [Boolean] skip_nil_row 1列でも欠損がある行をスキップする
       # @example
@@ -92,7 +93,7 @@ module Datasets
       #     cat: ["A1101"], # A1101_人口総数
       #     area: ["01105", "01106"], # "北海道 札幌市 豊平区", "北海道 札幌市 南区"
       #     time: ["1981100000", "1982100000"],
-      #     skip_parent_area:false , # 例: 札幌市○○区があるときは札幌市をスキップ
+      #     hierarchy_selection: 'child' , # 例: 札幌市○○区があるときは札幌市をスキップ
       #     skip_child_area: true, # 例: 札幌市○○区をスキップして札幌市を残す TODO skip_(parent|child) を統合する
       #     skip_nil_column: true, #  1行でも欠損があったら列をスキップする
       #     skip_nil_row: false, # 1列でも欠損があったら行をスキップする
@@ -102,8 +103,7 @@ module Datasets
                      api_version: '2.1',
                      area: nil, cat: nil, time: nil,
                      skip_level: [1],
-                     skip_parent_area: true,
-                     skip_child_area: false,
+                     hierarchy_selection: 'child',
                      skip_nil_column: true,
                      skip_nil_row: false,
                      time_range: nil)
@@ -126,22 +126,30 @@ module Datasets
         @cat = cat
         @time = time
         @skip_level = skip_level
-        @skip_child_area = skip_child_area
-        @skip_parent_area = skip_parent_area
+        case hierarchy_selection
+        when 'child' then
+          @skip_child_area = false
+          @skip_parent_area = true
+        when 'parent' then
+          @skip_child_area = true
+          @skip_parent_area = false
+        else # 'both'
+          @skip_child_area = false
+          @skip_parent_area = false
+        end
         @skip_nil_column = skip_nil_column
         @skip_nil_row = skip_nil_row
         @time_range = time_range
 
         @url = JSONAPI.generate_url(@base_url,
-                                   @app_id,
-                                   @stats_data_id,
-                                   area: @area,
-                                   cat: @cat,
-                                   time: @time)
+                                    @app_id,
+                                    @stats_data_id,
+                                    area: @area,
+                                    cat: @cat,
+                                    time: @time)
         option_hash = Digest::MD5.hexdigest(@url.to_s)
         base_name = "estat-#{option_hash}.json"
         @data_path = cache_dir_path + base_name
-                           
       end
 
       #
@@ -160,6 +168,7 @@ module Datasets
       #
       def each
         return to_enum(__method__) unless block_given?
+
         fetch_data
         index_data
 
@@ -191,7 +200,7 @@ module Datasets
 
       def fetch_data
         download(@data_path, @url.to_s) unless @data_path.exist?
-        # TODO check error
+         # TODO: check error
        end
 
       def index_data
@@ -204,7 +213,7 @@ module Datasets
         api_status = json_data['GET_STATS_DATA']['RESULT']['STATUS']
         if api_status != 0
           error_msg = json_data['GET_STATS_DATA']['RESULT']['ERROR_MSG']
-          raise Exception.new("code #{api_status} : #{error_msg}")
+          raise Exception, "code #{api_status} : #{error_msg}"
         end
 
         # index data

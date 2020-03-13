@@ -66,25 +66,60 @@ RSpec.describe Datasets::Estatjp do
 
   it 'can parse api result correctly' do
     ENV['ESTATJP_APPID'] = 'test_appid_correct'
+    test_path = 'spec/data/test-200-0000020201.json'
+
     estat_obj = Datasets::Estatjp::JSONAPI.new('test')
     estat_obj.instance_eval do
-      @data_path = Pathname('spec/data/test-200-0000020201.json')
+      @data_path = Pathname(test_path)
     end
     expect do
       records = []
+      sapporo_records = []
       estat_obj.each do |record|
         records << record
+        sapporo_records << record if record.name.start_with? '北海道 札幌市'
       end
       expect(records.length).to eq 1897
+      expect(sapporo_records.length).to eq 10
     end.not_to raise_error
-    ENV['ESTATJP_APPID'] = nil
 
-    # TODO tests for option
-    # skip_parent_area: true,
-    # skip_child_area: false,
+    estat_obj = \
+      Datasets::Estatjp::JSONAPI.new('test',
+                                     hierarchy_selection: 'parent')
+    estat_obj.instance_eval do
+      @data_path = Pathname(test_path)
+    end
+    expect do
+      records = []
+      sapporo_records = []
+      estat_obj.each do |record|
+        records << record
+        sapporo_records << record if record.name.start_with? '北海道 札幌市'
+      end
+      expect(records.length).to eq 1722
+      expect(sapporo_records.length).to eq 1
+    end.not_to raise_error
+
+    estat_obj = \
+      Datasets::Estatjp::JSONAPI.new('test',
+                                     hierarchy_selection: 'both')
+    estat_obj.instance_eval do
+      @data_path = Pathname(test_path)
+    end
+    expect do
+      records = []
+      sapporo_records = []
+      estat_obj.each do |record|
+        records << record
+        sapporo_records << record if record.name.start_with? '北海道 札幌市'
+      end
+      expect(records.length).to eq 1917
+      expect(sapporo_records.length).to eq 11
+    end.not_to raise_error
+
     # skip_nil_column: true,
     # skip_nil_row: false,
 
+    ENV['ESTATJP_APPID'] = nil
   end
-
 end
